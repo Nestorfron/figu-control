@@ -52,7 +52,19 @@ const selecciones = [
   
   // 2. Jugadores franquicia y elementos institucionales confirmados
   const nombresClave = {
- 
+    "FWC-1": "Logo Panini",
+    "FWC-2": "Trofeo de la Copa del Mundo",
+    "FWC-3": "Mascota Oficial",
+    "FWC-4": "Pelota Oficial",
+    "ARG-19": "Lionel Messi",
+    "URU-3": "Federico Valverde",
+    "URU-4": "Darwin Núñez",
+    "BRA-8": "Vinicius Jr",
+    "FRA-10": "Kylian Mbappé",
+    "CC-1": "Lamine Yamal (Coca-Cola)",
+    "CC-2": "Harry Kane (Coca-Cola)",
+    "CC-3": "Joshua Kimmich (Coca-Cola)",
+    "CC-4": "Lautaro Martínez (Coca-Cola)"
   };
   
   // 3. Función constructora automática del catálogo completo

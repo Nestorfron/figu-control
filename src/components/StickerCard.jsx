@@ -15,18 +15,19 @@ export default function StickerCard({
         relative
         rounded-2xl
         border
-        transition
+        transition-all
+        duration-300
         overflow-hidden
         p-3
         flex
         flex-col
         justify-between
-        min-h-[170px]
+        min-h-[160px]
         hover:scale-[1.02]
-        duration-200
+        active:scale-[0.98]
         ${
           sticker.pegada
-            ? "bg-[#008f72]/15 border-[#008f72]"
+            ? "bg-[#008f72]/15 border-[#008f72] shadow-lg shadow-[#008f72]/10"
             : "bg-zinc-900 border-zinc-800"
         }
       `}
@@ -38,15 +39,18 @@ export default function StickerCard({
         </span>
 
         {sticker.repetidas > 0 && (
-          <div className="
-            bg-yellow-500
-            text-black
-            text-xs
-            px-2
-            py-0.5
-            rounded-full
-            font-bold
-          ">
+          <div
+            className="
+              bg-yellow-500
+              text-black
+              text-xs
+              px-2
+              py-0.5
+              rounded-full
+              font-bold
+              animate-pulse
+            "
+          >
             x{sticker.repetidas}
           </div>
         )}
@@ -54,7 +58,16 @@ export default function StickerCard({
 
       {/* Nombre */}
       <div className="mt-3">
-        <h3 className="text-white font-semibold text-sm leading-tight">
+        <h3
+          className="
+            text-white
+            font-semibold
+            text-sm
+            leading-tight
+            line-clamp-2
+            min-h-[36px]
+          "
+        >
           {sticker.jugador}
         </h3>
 
@@ -75,10 +88,12 @@ export default function StickerCard({
             py-2
             text-xs
             font-bold
-            transition
+            transition-all
+            duration-300
+            active:scale-95
             ${
               sticker.pegada
-                ? "bg-[#008f72] text-white"
+                ? "bg-[#008f72] text-white shadow-lg shadow-[#008f72]/30"
                 : "bg-zinc-800 text-zinc-300"
             }
           `}
@@ -98,6 +113,10 @@ export default function StickerCard({
             bg-yellow-500
             text-black
             font-bold
+            transition-all
+            duration-200
+            hover:scale-105
+            active:scale-95
           "
         >
           +
@@ -113,6 +132,10 @@ export default function StickerCard({
             bg-red-500
             text-white
             font-bold
+            transition-all
+            duration-200
+            hover:scale-105
+            active:scale-95
           "
         >
           −
