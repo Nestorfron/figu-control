@@ -1,0 +1,297 @@
+import { useState } from "react";
+import { useAlbumStore } from "../store/useAlbumStore";
+import { ArrowLeft } from "lucide-react";
+
+import Stats from "../components/Stats";
+import StickerCard from "../components/StickerCard";
+
+export default function Home() {
+  const { stickers } = useAlbumStore();
+
+  const [showWelcome, setShowWelcome] =
+  useState(
+    !localStorage.getItem(
+      "figucontrol-welcome"
+    )
+  );
+
+  const [selectedCountry, setSelectedCountry] = useState(null);
+
+  const flags = {
+    Argentina: "ar",
+    Australia: "au",
+    Austria: "at",
+    Bélgica: "be",
+    "Bosnia y Herzegovina": "ba",
+    Brasil: "br",
+    Canadá: "ca",
+    Chile: "cl",
+    "Costa de Marfil": "ci",
+    Colombia: "co",
+    "Costa Rica": "cr",
+    Croacia: "hr",
+    Curazao: "cw",
+    "República Checa": "cz",
+    Dinamarca: "dk",
+    Ecuador: "ec",
+    Egipto: "eg",
+    Inglaterra: "gb",
+    España: "es",
+    Francia: "fr",
+    Alemania: "de",
+    Ghana: "gh",
+    Honduras: "hn",
+    Irán: "ir",
+    Irak: "iq",
+    Italia: "it",
+    Jordania: "jo",
+    Japón: "jp",
+    "Corea del Sur": "kr",
+    "Arabia Saudita": "sa",
+    Marruecos: "ma",
+    México: "mx",
+    Malí: "ml",
+    "Países Bajos": "nl",
+    Nigeria: "ng",
+    Noruega: "no",
+    "Nueva Zelanda": "nz",
+    Panamá: "pa",
+    Paraguay: "py",
+    Perú: "pe",
+    Portugal: "pt",
+    Sudáfrica: "za",
+    Escocia: "gb",
+    Senegal: "sn",
+    Suiza: "ch",
+    Túnez: "tn",
+    Uruguay: "uy",
+    "Estados Unidos": "us",
+  };
+
+  const countries = [...new Set(stickers.map((s) => s.seleccion))];
+
+  // Vista país seleccionado
+  if (selectedCountry) {
+    const filtered = stickers.filter((s) => s.seleccion === selectedCountry);
+
+    return (
+      <div className="min-h-screen bg-black p-6">
+        <div className="max-w-7xl mx-auto">
+          <button
+            onClick={() => setSelectedCountry(null)}
+            className="
+    fixed
+    bottom-6
+    right-6
+    w-14
+    h-14
+    rounded-full
+    bg-[#008f72]
+    text-white
+    shadow-2xl
+    flex
+    items-center
+    justify-center
+    hover:scale-105
+    active:scale-95
+    transition
+    z-50
+  "
+          >
+            <ArrowLeft size={24} />
+          </button>
+
+          <h1 className="text-5xl font-black text-white mb-8">
+            {selectedCountry}
+          </h1>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {filtered.map((sticker) => (
+              <StickerCard key={sticker.id} sticker={sticker} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  {
+    showWelcome && (
+      <div className="
+        fixed
+        inset-0
+        bg-black/70
+        backdrop-blur-sm
+        flex
+        items-center
+        justify-center
+        z-50
+        p-6
+      ">
+        <div className="
+          bg-zinc-900
+          border
+          border-zinc-800
+          rounded-3xl
+          p-8
+          max-w-md
+          w-full
+        ">
+          <h2 className="
+            text-3xl
+            font-black
+            text-white
+            mb-4
+          ">
+            👋 Bienvenido
+          </h2>
+  
+          <p className="
+            text-zinc-300
+            leading-relaxed
+          ">
+            Organizá tus figuritas del
+            Mundial 2026 con FiguControl.
+          </p>
+  
+          <div className="
+            mt-6
+            space-y-2
+            text-sm
+            text-zinc-400
+          ">
+            <p>
+              ✅ Marcá las pegadas
+            </p>
+  
+            <p>
+              🔁 Controlá repetidas
+            </p>
+  
+            <p>
+              📊 Seguimiento por selección
+            </p>
+  
+            <p>
+              📱 Instalá la app en tu celular
+            </p>
+          </div>
+  
+          <button
+            onClick={() => {
+              localStorage.setItem(
+                "figucontrol-welcome",
+                "true"
+              );
+  
+              setShowWelcome(false);
+            }}
+            className="
+              mt-8
+              w-full
+              bg-[#008f72]
+              hover:opacity-90
+              transition
+              rounded-2xl
+              py-3
+              text-white
+              font-bold
+            "
+          >
+            Empezar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Vista principal
+  return (
+    <div className="min-h-screen bg-black p-6">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-5xl font-black text-white mb-2">FiguControl</h1>
+
+        <p className="text-zinc-400 mb-8">Organizá tus figuritas</p>
+
+        {/* Estadísticas */}
+        <Stats stickers={stickers} />
+
+        {/* Países */}
+        <h2 className="text-2xl font-bold text-white mb-5 mt-10">
+          Selecciones
+        </h2>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {countries.map((country) => {
+            const countryStickers = stickers.filter(
+              (s) => s.seleccion === country
+            );
+
+            const pegadas = countryStickers.filter((s) => s.pegada).length;
+
+            const total = countryStickers.length;
+
+            const progress = Math.round((pegadas / total) * 100);
+
+            return (
+              <button
+                key={country}
+                onClick={() => setSelectedCountry(country)}
+                className="
+                bg-zinc-900
+                border
+                border-zinc-800
+                rounded-3xl
+                p-5
+                hover:border-[#008f72]
+                transition
+                flex
+                flex-col
+                items-center
+                justify-center
+                aspect-square
+              "
+              >
+                <div className="mb-4">
+                  {flags[country] ? (
+                    <img
+                      src={`https://flagcdn.com/w80/${flags[country]}.png`}
+                      alt={country}
+                      className="
+        w-16
+        h-12
+        object-cover
+        rounded-lg
+        shadow-md
+      "
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="text-5xl">🌍</div>
+                  )}
+                </div>
+
+                <h2 className="text-white text-sm font-medium text-center">
+                  {country}
+                </h2>
+
+                <p className="text-zinc-500 text-xs mt-2">
+                  {pegadas}/{total}
+                </p>
+
+                <div className="w-full h-1.5 bg-zinc-800 rounded-full mt-3 overflow-hidden">
+                  <div
+                    className="h-full bg-[#008f72]"
+                    style={{
+                      width: `${progress}%`,
+                    }}
+                  />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
