@@ -1,5 +1,5 @@
 // 1. Listado oficial de las 48 selecciones con sus siglas oficiales de Panini
-const selecciones = [
+const seleccionesParticipantes = [
   { codigo: "ALG", nombre: "Argelia" },
   { codigo: "ARG", nombre: "Argentina" },
   { codigo: "AUS", nombre: "Australia" },
@@ -48,28 +48,8 @@ const selecciones = [
   { codigo: "USA", nombre: "Estados Unidos" },
   { codigo: "URU", nombre: "Uruguay" },
   { codigo: "UZB", nombre: "Uzbekistán" },
-  { codigo: "FWC", nombre: "FIFA" },
-  { codigo: "CC", nombre: "Coca-Cola" },
 ];
 
-// 2. Jugadores franquicia y elementos especiales
-const nombresClave = {
-  "FWC-1": "Logo Panini",
-  "FWC-2": "Trofeo de la Copa del Mundo",
-  "FWC-3": "Mascota Oficial",
-  "FWC-4": "Pelota Oficial",
-
-  "ARG-19": "Lionel Messi",
-  "URU-3": "Federico Valverde",
-  "URU-4": "Darwin Núñez",
-  "BRA-8": "Vinicius Jr",
-  "FRA-10": "Kylian Mbappé",
-
-  "CC-1": "Lamine Yamal (Coca-Cola)",
-  "CC-2": "Harry Kane (Coca-Cola)",
-  "CC-3": "Joshua Kimmich (Coca-Cola)",
-  "CC-4": "Lautaro Martínez (Coca-Cola)",
-};
 
 // 3. Generador de catálogo
 const generarCatalogoCompleto = () => {
@@ -83,14 +63,14 @@ const generarCatalogoCompleto = () => {
     listaCompleta.push({
       id: idUnico++,
       numero: codSticker,
-      jugador: nombresClave[codSticker] || `Especial Institucional FWC ${i}`,
+      jugador: codSticker || `Especial Institucional FWC ${i}`,
       seleccion: "FIFA",
       tipo: "especial",
     });
   }
 
   // 🔵 PARTE B: Selecciones (20 por país)
-  selecciones.forEach((pais) => {
+  seleccionesParticipantes.forEach((pais) => {
     for (let i = 1; i <= 20; i++) {
       const codSticker = `${pais.codigo}-${i}`;
 
@@ -105,11 +85,6 @@ const generarCatalogoCompleto = () => {
         tipo = "equipo";
       }
 
-      if (nombresClave[codSticker]) {
-        nombreAsignado = nombresClave[codSticker];
-        tipo = "estrella";
-      }
-
       listaCompleta.push({
         id: idUnico++,
         numero: codSticker,
@@ -120,14 +95,14 @@ const generarCatalogoCompleto = () => {
     }
   });
 
-  // 🟡 PARTE C: Coca-Cola (1–12)
-  for (let i = 1; i <= 12; i++) {
+  // 🟡 PARTE C: Coca-Cola (1–14)
+  for (let i = 1; i <= 14; i++) {
     const codSticker = `CC-${i}`;
 
     listaCompleta.push({
       id: idUnico++,
       numero: codSticker,
-      jugador: nombresClave[codSticker] || `Estrella Exclusiva Coca-Cola ${i}`,
+      jugador: codSticker || `Estrella Exclusiva Coca-Cola ${i}`,
       seleccion: "Coca-Cola",
       tipo: "especial",
     });
@@ -135,6 +110,8 @@ const generarCatalogoCompleto = () => {
 
   return listaCompleta;
 };
+
+const selecciones = seleccionesParticipantes.concat({ codigo: "CC", nombre: "Coca-Cola" }, { codigo: "FWC", nombre: "FIFA" });
 
 // Exportación
 export const stickers = generarCatalogoCompleto();
