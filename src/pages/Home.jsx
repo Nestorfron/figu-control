@@ -178,7 +178,7 @@ export default function Home() {
       if (!acc[codigo]) acc[codigo] = [];
   
       acc[codigo].push(
-        `${s.numero.split("-")[1]} (${s.repetidas}x)`
+        `${s.numero.split("-")[1]} x${s.repetidas}`
       );
   
       return acc;
