@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import { stickers as initialStickers } from "../data/stickers";
 
-const saved = localStorage.getItem("album-storage");
+const STORAGE_KEY = "album-storage";
+
+const saved = localStorage.getItem(STORAGE_KEY);
 
 export const useAlbumStore = create((set) => ({
   stickers: saved
@@ -12,18 +14,19 @@ export const useAlbumStore = create((set) => ({
         repetidas: 0,
       })),
 
+  // 🔥 NUEVO → necesario para import
+  setStickers: (newStickers) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newStickers));
+    set({ stickers: newStickers });
+  },
+
   togglePegada: (id) =>
     set((state) => {
       const updated = state.stickers.map((s) =>
-        s.id === id
-          ? { ...s, pegada: !s.pegada }
-          : s
+        s.id === id ? { ...s, pegada: !s.pegada } : s
       );
 
-      localStorage.setItem(
-        "album-storage",
-        JSON.stringify(updated)
-      );
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
       return { stickers: updated };
     }),
@@ -32,17 +35,11 @@ export const useAlbumStore = create((set) => ({
     set((state) => {
       const updated = state.stickers.map((s) =>
         s.id === id
-          ? {
-              ...s,
-              repetidas: s.repetidas + 1,
-            }
+          ? { ...s, repetidas: s.repetidas + 1 }
           : s
       );
 
-      localStorage.setItem(
-        "album-storage",
-        JSON.stringify(updated)
-      );
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
       return { stickers: updated };
     }),
@@ -53,18 +50,12 @@ export const useAlbumStore = create((set) => ({
         s.id === id
           ? {
               ...s,
-              repetidas:
-                s.repetidas > 0
-                  ? s.repetidas - 1
-                  : 0,
+              repetidas: s.repetidas > 0 ? s.repetidas - 1 : 0,
             }
           : s
       );
 
-      localStorage.setItem(
-        "album-storage",
-        JSON.stringify(updated)
-      );
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
       return { stickers: updated };
     }),

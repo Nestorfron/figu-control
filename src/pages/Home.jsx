@@ -18,6 +18,10 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
+  // 🔥 NUEVO (modal import)
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importedData, setImportedData] = useState(null);
+
   const flags = {
     Argentina: "ar",
     Australia: "au",
@@ -74,9 +78,7 @@ export default function Home() {
   const repetidasAgrupadas = stickers
     .filter((s) => s.repetidas > 0)
     .reduce((acc, sticker) => {
-      if (!acc[sticker.seleccion]) {
-        acc[sticker.seleccion] = [];
-      }
+      if (!acc[sticker.seleccion]) acc[sticker.seleccion] = [];
       acc[sticker.seleccion].push(sticker);
       return acc;
     }, {});
@@ -85,10 +87,7 @@ export default function Home() {
   const exportRepetidas = () => {
     const repetidas = stickers.filter((s) => s.repetidas > 0);
 
-    if (repetidas.length === 0) {
-      alert("No tienes repetidas");
-      return;
-    }
+    if (!repetidas.length) return alert("No tienes repetidas");
 
     const texto = repetidas
       .map((s) => `${s.numero} - ${s.jugador} (${s.repetidas}x)`)
@@ -100,15 +99,13 @@ export default function Home() {
 
   // EXPORT BACKUP
   const exportData = () => {
-    const dataStr = JSON.stringify(stickers, null, 2);
-
-    const blob = new Blob([dataStr], {
+    const blob = new Blob([JSON.stringify(stickers, null, 2)], {
       type: "application/json",
     });
 
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
+
     a.href = url;
     a.download = "figucontrol-backup.json";
     a.click();
@@ -121,55 +118,79 @@ export default function Home() {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!confirm("Esto reemplazará todos tus datos actuales")) return;
-
     const reader = new FileReader();
 
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target.result);
 
-        if (!Array.isArray(data)) {
-          alert("Archivo inválido");
-          return;
-        }
+        if (!Array.isArray(data)) throw new Error("Archivo inválido");
 
-        setStickers(data);
-        alert("Datos importados correctamente");
+        const normalized = data.map((item, index) => ({
+          id: item.id ?? index + 1,
+          numero: item.numero ?? "",
+          jugador: item.jugador ?? "Desconocido",
+          seleccion: item.seleccion ?? "Sin selección",
+          pegada: typeof item.pegada === "boolean" ? item.pegada : false,
+          repetidas: typeof item.repetidas === "number" ? item.repetidas : 0,
+        }));
+
+        setImportedData(normalized);
+        setShowImportModal(true);
+
       } catch (err) {
-        alert("Error al importar archivo");
+        console.error(err);
+        alert("❌ Error: " + err.message);
       }
     };
 
-    reader.readAsText(file);
+    reader.readAsText(file, "UTF-8");
+  };
+
+  // 🔥 MODAL ACTIONS
+  const handleReplace = () => {
+    setStickers(importedData);
+    setShowImportModal(false);
+    alert("✅ Datos reemplazados");
+  };
+
+  const handleMerge = () => {
+    setStickers((prev) => {
+      const merged = [...prev];
+
+      importedData.forEach((newSticker) => {
+        const index = merged.findIndex((s) => s.id === newSticker.id);
+
+        if (index !== -1) {
+          merged[index] = {
+            ...merged[index],
+            pegada: merged[index].pegada || newSticker.pegada,
+            repetidas: merged[index].repetidas + newSticker.repetidas,
+          };
+        } else {
+          merged.push(newSticker);
+        }
+      });
+
+      return merged;
+    });
+
+    setShowImportModal(false);
+    alert("🔀 Datos combinados");
   };
 
   // WELCOME
   if (showWelcome) {
     return (
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 max-w-md w-full">
-          <h2 className="text-3xl font-black text-white mb-4">
-            👋 Bienvenido
-          </h2>
-
-          <p className="text-zinc-300 leading-relaxed">
-            Organizá tus figuritas del Mundial 2026 con FiguControl.
-          </p>
-
-          <div className="mt-6 space-y-2 text-sm text-zinc-400">
-            <p>✅ Marcá las pegadas</p>
-            <p>🔁 Controlá repetidas</p>
-            <p>📊 Seguimiento por selección</p>
-            <p>📱 Instalá la app en tu celular</p>
-          </div>
-
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div className="bg-zinc-900 p-8 rounded-3xl max-w-md w-full">
+          <h2 className="text-3xl text-white mb-4">👋 Bienvenido</h2>
           <button
             onClick={() => {
               localStorage.setItem("figucontrol-welcome", "true");
               setShowWelcome(false);
             }}
-            className="mt-8 w-full bg-[#008f72] rounded-2xl py-3 text-white font-bold"
+            className="w-full bg-[#008f72] py-3 rounded-2xl text-white"
           >
             Empezar
           </button>
@@ -178,116 +199,59 @@ export default function Home() {
     );
   }
 
-  // 🔥 NUEVA VISTA: PAÍS
+  // PAIS
   if (selectedCountry) {
-    const countryStickers = stickers.filter(
-      (s) => s.seleccion === selectedCountry
-    );
+    const filtered = stickers
+      .filter((s) => s.seleccion === selectedCountry)
+      .filter((s) => {
+        const matchSearch =
+          s.jugador.toLowerCase().includes(search.toLowerCase()) ||
+          s.numero.toString().includes(search);
 
-    const filtered = countryStickers.filter((s) => {
-      const matchSearch =
-        s.jugador.toLowerCase().includes(search.toLowerCase()) ||
-        s.numero.toString().includes(search);
+        const matchFilter =
+          filter === "all"
+            ? true
+            : filter === "pegadas"
+            ? s.pegada
+            : !s.pegada;
 
-      const matchFilter =
-        filter === "all"
-          ? true
-          : filter === "pegadas"
-          ? s.pegada
-          : !s.pegada;
+        return matchSearch && matchFilter;
+      });
 
-      return matchSearch && matchFilter;
-    });
-
-    return (
-      <div className="min-h-screen bg-black p-6 animate-fade-in">
-        <div className="max-w-5xl mx-auto">
-          <button
-            onClick={() => {
-              setSelectedCountry(null);
-              setSearch("");
-              setFilter("all");
-            }}
-            className="z-50 fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#008f72] text-white flex items-center justify-center"
-          >
-            <ArrowLeft size={24} />
-          </button>
-
-          <h1 className="text-4xl font-black text-white mb-6">
-            {selectedCountry}
-          </h1>
-
-          {/* BUSCADOR + FILTRO */}
-          <div className="flex gap-3 mb-6">
-            <div className="flex items-center bg-zinc-900 rounded-xl px-3 flex-1">
-              <Search className="text-zinc-400" size={18} />
-              <input
-                type="text"
-                placeholder="Buscar jugador o número..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="bg-transparent outline-none text-white px-2 py-3 w-full"
-              />
-            </div>
-
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="bg-zinc-900 text-white rounded-xl px-3"
-            >
-              <option value="all">Todas</option>
-              <option value="pegadas">Pegadas</option>
-              <option value="faltan">Faltan</option>
-            </select>
-          </div>
-
-          {/* STICKERS */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {filtered.map((sticker) => (
-              <StickerCard key={sticker.id} sticker={sticker} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // REPETIDAS
-  if (showRepetidas) {
     return (
       <div className="min-h-screen bg-black p-6">
-        <div className="max-w-5xl mx-auto z-index-10">
-          <button
-            onClick={() => setShowRepetidas(false)}
-            className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#008f72] text-white flex items-center justify-center"
+        <button
+          onClick={() => setSelectedCountry(null)}
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#008f72] rounded-full text-white flex items-center justify-center shadow-2xl"
+        >
+          <ArrowLeft />
+        </button>
+
+        <h1 className="text-4xl text-white mb-6">{selectedCountry}</h1>
+
+        <div className="flex gap-3 mb-6">
+          <input
+            placeholder="Buscar..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 bg-zinc-900 text-white px-3 py-2 rounded-xl"
+          />
+
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="bg-zinc-900 text-white px-3 rounded-xl"
           >
-            <ArrowLeft size={24} />
-          </button>
+            <option value="all">Todas</option>
+            <option value="pegadas">Pegadas</option>
+            <option value="faltan">Faltan</option>
+          </select>
+        </div>
 
-          <h1 className="text-5xl font-black text-white mb-10">
-            Repetidas
-          </h1>
-
-          <div className="space-y-8">
-            {Object.entries(repetidasAgrupadas).map(([country, items]) => (
-              <div key={country} className="bg-zinc-900 rounded-3xl p-6">
-                <h2 className="text-2xl font-bold text-white mb-5">
-                  {country}
-                </h2>
-
-                {items.map((sticker) => (
-                  <div key={sticker.id} className="flex justify-between py-2">
-                    <p className="text-white">
-                      {sticker.numero} — {sticker.jugador}
-                    </p>
-                    <span className="text-yellow-400">
-                      x{sticker.repetidas}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {filtered.map((s) => (
+            <StickerCard key={s.id} sticker={s} />
+          ))}
         </div>
       </div>
     );
@@ -296,83 +260,61 @@ export default function Home() {
   // PRINCIPAL
   return (
     <div className="min-h-screen bg-black p-6">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-5xl font-black text-white mb-2">
-          FiguControl
-        </h1>
+      <Stats stickers={stickers} onShowRepetidas={() => setShowRepetidas(true)} />
 
-        <p className="text-zinc-400 mb-8">
-          Organizá tus figuritas
-        </p>
+      <div className="flex gap-3 mt-6 flex-wrap">
+        <button onClick={exportRepetidas} className="bg-[#008f72] px-4 py-2 rounded text-white">
+          Exportar repetidas
+        </button>
 
-        <Stats
-          stickers={stickers}
-          onShowRepetidas={() => setShowRepetidas(true)}
-        />
+        <button onClick={exportData} className="bg-blue-600 px-4 py-2 rounded text-white">
+          Exportar backup
+        </button>
 
-        <div className="flex gap-3 mt-6 flex-wrap">
-          <button
-            onClick={exportRepetidas}
-            className="bg-[#008f72] text-white px-5 py-3 rounded-2xl font-bold"
-          >
-            Exportar repetidas
-          </button>
-
-          <button
-            onClick={exportData}
-            className="bg-blue-600 text-white px-5 py-3 rounded-2xl font-bold"
-          >
-            Exportar backup
-          </button>
-
-          <label className="bg-purple-600 text-white px-5 py-3 rounded-2xl font-bold cursor-pointer">
-            Importar backup
-            <input
-              type="file"
-              accept="application/json"
-              onChange={importData}
-              className="hidden"
-            />
-          </label>
-        </div>
-
-        <h2 className="text-2xl font-bold text-white mb-5 mt-10">
-          Selecciones
-        </h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {countries.map((country) => {
-            const countryStickers = stickers.filter(
-              (s) => s.seleccion === country
-            );
-
-            const pegadas = countryStickers.filter((s) => s.pegada).length;
-            const total = countryStickers.length;
-
-            return (
-              <button
-                key={country}
-                onClick={() => setSelectedCountry(country)}
-                className="bg-zinc-900 rounded-3xl p-5 flex flex-col items-center"
-              >
-                <img
-                  src={`https://flagcdn.com/w80/${flags[country]}.png`}
-                  alt={country}
-                  className="w-16 h-12 rounded"
-                />
-
-                <p className="text-white text-sm mt-3 text-center">
-                  {country}
-                </p>
-
-                <p className="text-zinc-400 text-xs">
-                  {pegadas}/{total}
-                </p>
-              </button>
-            );
-          })}
-        </div>
+        <label className="bg-purple-600 px-4 py-2 rounded text-white cursor-pointer">
+          Importar
+          <input type="file" hidden onChange={importData} />
+        </label>
       </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        {countries.map((country) => (
+          <button
+            key={country}
+            onClick={() => setSelectedCountry(country)}
+            className="bg-zinc-900 p-4 rounded-2xl text-white"
+          >
+            <img
+              src={`https://flagcdn.com/w80/${flags[country] || "un"}.png`}
+              className="w-12 mx-auto"
+            />
+            <p className="text-sm mt-2">{country}</p>
+          </button>
+        ))}
+      </div>
+
+      {/* 🔥 MODAL IMPORT */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-zinc-900 p-6 rounded-3xl w-full max-w-md">
+            <h2 className="text-xl text-white mb-4">Importar datos</h2>
+
+            <div className="flex flex-col gap-3">
+              <button onClick={handleReplace} className="bg-red-600 py-3 rounded text-white">
+                Reemplazar
+              </button>
+
+              <button onClick={handleMerge} className="bg-[#008f72] py-3 rounded text-white">
+                Combinar
+              </button>
+
+              <button onClick={() => setShowImportModal(false)} className="bg-zinc-800 py-3 rounded text-white">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
