@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAlbumStore } from "../store/useAlbumStore";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, Upload } from "lucide-react";
 
 import Stats from "../components/Stats";
 import StickerCard from "../components/StickerCard";
@@ -23,6 +23,57 @@ export default function Home() {
   // 🔥 NUEVO (modal import)
   const [showImportModal, setShowImportModal] = useState(false);
   const [importedData, setImportedData] = useState(null);
+
+  const flagEmojiByCode = {
+    ARG: "🇦🇷",
+    AUS: "🇦🇺",
+    AUT: "🇦🇹",
+    BEL: "🇧🇪",
+    BIH: "🇧🇦",
+    BRA: "🇧🇷",
+    CAN: "🇨🇦",
+    COL: "🇨🇴",
+    CIV: "🇨🇮",
+    CRO: "🇭🇷",
+    CUW: "🇨🇼",
+    CZE: "🇨🇿",
+    ECU: "🇪🇨",
+    EGY: "🇪🇬",
+    ENG: "🏴",
+    ESP: "🇪🇸",
+    FRA: "🇫🇷",
+    GER: "🇩🇪",
+    GHA: "🇬🇭",
+    HTI: "🇭🇹",
+    IRN: "🇮🇷",
+    IRQ: "🇮🇶",
+    JPN: "🇯🇵",
+    JOR: "🇯🇴",
+    KOR: "🇰🇷",
+    MAR: "🇲🇦",
+    MEX: "🇲🇽",
+    NED: "🇳🇱",
+    NZL: "🇳🇿",
+    NOR: "🇳🇴",
+    PAN: "🇵🇦",
+    PAR: "🇵🇾",
+    POR: "🇵🇹",
+    QAT: "🇶🇦",
+    KSA: "🇸🇦",
+    SCO: "🏴",
+    SEN: "🇸🇳",
+    ZAF: "🇿🇦",
+    SUI: "🇨🇭",
+    SWE: "🇸🇪",
+    TUN: "🇹🇳",
+    TUR: "🇹🇷",
+    USA: "🇺🇸",
+    URU: "🇺🇾",
+    UZB: "🇺🇿",
+    ALG: "🇩🇿",
+    CPV: "🇨🇻",
+    COD: "🇨🇩",
+  };
 
   const flags = {
     Argentina: "ar",
@@ -80,7 +131,7 @@ export default function Home() {
     Uzbekistán: "uz",
     Argelia: "dz",
     "Cabo Verde": "cv",
-    "República Democrática del Congo": "cd",
+    "Congo DR": "cd",
   };
 
   const countries = selecciones;
@@ -92,6 +143,33 @@ export default function Home() {
       acc[sticker.seleccion].push(sticker);
       return acc;
     }, {});
+
+  // EXPORTAR FALTANTES
+
+  const exportFaltantes = () => {
+    const faltantes = stickers.filter((s) => !s.pegada);
+
+    if (!faltantes.length) return alert("No te faltan figuritas 🎉");
+
+    const agrupado = faltantes.reduce((acc, s) => {
+      const codigo = s.numero.split("-")[0]; // 🔥 clave
+
+      if (!acc[codigo]) acc[codigo] = [];
+      acc[codigo].push(s.numero.split("-")[1]);
+
+      return acc;
+    }, {});
+
+    const texto = Object.entries(agrupado)
+      .map(([codigo, nums]) => {
+        const emoji = flagEmojiByCode[codigo] || "🏳️";
+        return `${codigo} ${emoji}: ${nums.join(", ")}`;
+      })
+      .join("\n");
+
+    navigator.clipboard.writeText(texto);
+    alert("Faltantes listos para WhatsApp 📱");
+  };
 
   // EXPORTAR REPETIDAS
   const exportRepetidas = () => {
@@ -188,25 +266,6 @@ export default function Home() {
     alert("🔀 Datos combinados");
   };
 
-  const exportFaltantes = () => {
-    const faltantes = stickers.filter((s) => !s.pegada);
-
-    if (!faltantes.length) return alert("No te faltan figuritas 🎉");
-
-    const agrupado = faltantes.reduce((acc, s) => {
-      if (!acc[s.seleccion]) acc[s.seleccion] = [];
-      acc[s.seleccion].push(s.numero);
-      return acc;
-    }, {});
-
-    const texto = Object.entries(agrupado)
-      .map(([pais, nums]) => `${pais}: ${nums.join(", ")}`)
-      .join("\n");
-
-    navigator.clipboard.writeText(texto);
-    alert("Faltantes agrupados copiados");
-  };
-
   // WELCOME
   if (showWelcome) {
     return (
@@ -294,14 +353,14 @@ export default function Home() {
           onClick={exportFaltantes}
           className="bg-yellow-600 px-4 py-2 rounded text-white"
         >
-          Faltantes 
+          Faltantes
           <Download />
         </button>
         <button
           onClick={exportRepetidas}
           className="bg-[#008f72] px-4 py-2 rounded text-white"
         >
-           Repetidas
+          Repetidas
           <Download />
         </button>
 
@@ -316,6 +375,7 @@ export default function Home() {
         <label className="bg-purple-600 px-4 py-2 rounded text-white cursor-pointer">
           Importar
           <input type="file" hidden onChange={importData} />
+          <Upload />
         </label>
       </div>
 
@@ -334,10 +394,16 @@ export default function Home() {
               onClick={() => setSelectedCountry(country.nombre)}
               className="bg-zinc-900 p-4 rounded-2xl text-white"
             >
-              <img
-                src={`https://flagcdn.com/w80/${flags[country.nombre]}.png`}
-                className="w-12 mx-auto"
-              />
+              {!["CC", "FWC"].includes(country.codigo) ? (
+                <img
+                  src={`https://flagcdn.io/${flags[country.nombre]}.svg`}
+                  className="w-12 mx-auto"
+                />
+              ) : (
+                <div className="w-12 h-8 flex items-center justify-center text-2xl mx-auto">
+                  🌍
+                </div>
+              )}
 
               <p className="text-sm mt-2 text-center">{country.nombre}</p>
 

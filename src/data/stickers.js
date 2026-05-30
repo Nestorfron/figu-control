@@ -47,7 +47,9 @@ const selecciones = [
   { codigo: "TUR", nombre: "Turquía" },
   { codigo: "USA", nombre: "Estados Unidos" },
   { codigo: "URU", nombre: "Uruguay" },
-  { codigo: "UZB", nombre: "Uzbekistán" }
+  { codigo: "UZB", nombre: "Uzbekistán" },
+  { codigo: "FWC", nombre: "FIFA" },
+  { codigo: "CC", nombre: "Coca-Cola" },
 ];
 
 // 2. Jugadores franquicia y elementos especiales
@@ -66,7 +68,7 @@ const nombresClave = {
   "CC-1": "Lamine Yamal (Coca-Cola)",
   "CC-2": "Harry Kane (Coca-Cola)",
   "CC-3": "Joshua Kimmich (Coca-Cola)",
-  "CC-4": "Lautaro Martínez (Coca-Cola)"
+  "CC-4": "Lautaro Martínez (Coca-Cola)",
 };
 
 // 3. Generador de catálogo
@@ -81,11 +83,9 @@ const generarCatalogoCompleto = () => {
     listaCompleta.push({
       id: idUnico++,
       numero: codSticker,
-      jugador:
-        nombresClave[codSticker] ||
-        `Especial Institucional FWC ${i}`,
+      jugador: nombresClave[codSticker] || `Especial Institucional FWC ${i}`,
       seleccion: "FIFA",
-      tipo: "especial"
+      tipo: "especial",
     });
   }
 
@@ -115,7 +115,7 @@ const generarCatalogoCompleto = () => {
         numero: codSticker,
         jugador: nombreAsignado,
         seleccion: pais.nombre,
-        tipo
+        tipo,
       });
     }
   });
@@ -127,11 +127,9 @@ const generarCatalogoCompleto = () => {
     listaCompleta.push({
       id: idUnico++,
       numero: codSticker,
-      jugador:
-        nombresClave[codSticker] ||
-        `Estrella Exclusiva Coca-Cola ${i}`,
+      jugador: nombresClave[codSticker] || `Estrella Exclusiva Coca-Cola ${i}`,
       seleccion: "Coca-Cola",
-      tipo: "especial"
+      tipo: "especial",
     });
   }
 
@@ -143,6 +141,4 @@ export const stickers = generarCatalogoCompleto();
 export { selecciones };
 
 // Debug
-console.log(
-  `[Panini 2026] Catálogo generado: ${stickers.length} figuritas`
-);
+console.log(`Catálogo generado: ${stickers.length} figuritas`);
