@@ -1,8 +1,6 @@
 import { useAlbumStore } from "../store/useAlbumStore";
 
-export default function StickerCard({
-  sticker,
-}) {
+export default function StickerCard({ sticker }) {
   const {
     togglePegada,
     addRepetida,
@@ -11,6 +9,7 @@ export default function StickerCard({
 
   return (
     <div
+      onClick={() => togglePegada(sticker.id)}
       className={`
         relative
         rounded-2xl
@@ -23,12 +22,13 @@ export default function StickerCard({
         flex-col
         justify-between
         min-h-[160px]
-        hover:scale-[1.02]
-        active:scale-[0.98]
+        cursor-pointer
+        hover:scale-[1.03]
+        active:scale-[0.97]
         ${
           sticker.pegada
-            ? "bg-[#008f72]/15 border-[#008f72] shadow-lg shadow-[#008f72]/10"
-            : "bg-zinc-900 border-zinc-800"
+            ? "bg-[#008f72]/15 border-[#008f72] shadow-lg shadow-[#008f72]/20"
+            : "bg-zinc-900 border-zinc-800 hover:border-zinc-600"
         }
       `}
     >
@@ -79,9 +79,10 @@ export default function StickerCard({
       {/* Botones */}
       <div className="flex gap-2 mt-4">
         <button
-          onClick={() =>
-            togglePegada(sticker.id)
-          }
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePegada(sticker.id);
+          }}
           className={`
             flex-1
             rounded-xl
@@ -98,15 +99,14 @@ export default function StickerCard({
             }
           `}
         >
-          {sticker.pegada
-            ? "Pegada"
-            : "Falta"}
+          {sticker.pegada ? "Pegada" : "Falta"}
         </button>
 
         <button
-          onClick={() =>
-            addRepetida(sticker.id)
-          }
+          onClick={(e) => {
+            e.stopPropagation();
+            addRepetida(sticker.id);
+          }}
           className="
             w-9
             rounded-xl
@@ -123,9 +123,10 @@ export default function StickerCard({
         </button>
 
         <button
-          onClick={() =>
-            removeRepetida(sticker.id)
-          }
+          onClick={(e) => {
+            e.stopPropagation();
+            removeRepetida(sticker.id);
+          }}
           className="
             w-9
             rounded-xl
