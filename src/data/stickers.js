@@ -40,7 +40,7 @@ const selecciones = [
   { codigo: "KSA", nombre: "Arabia Saudita" },
   { codigo: "SCO", nombre: "Escocia" },
   { codigo: "SEN", nombre: "Senegal" },
-  { codigo: "ZAF", nombre: "Sudáfrica" },
+  { codigo: "RSA", nombre: "Sudáfrica" },
   { codigo: "SUI", nombre: "Suiza" },
   { codigo: "SWE", nombre: "Suecia" },
   { codigo: "TUN", nombre: "Túnez" },
@@ -140,6 +140,7 @@ const generarCatalogoCompleto = () => {
 
 // Exportación
 export const stickers = generarCatalogoCompleto();
+export { selecciones };
 
 // Debug
 console.log(

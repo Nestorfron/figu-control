@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useAlbumStore } from "../store/useAlbumStore";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 
 import Stats from "../components/Stats";
 import StickerCard from "../components/StickerCard";
+
+import { selecciones } from "../data/stickers";
 
 export default function Home() {
   const { stickers, setStickers } = useAlbumStore();
@@ -40,7 +42,7 @@ export default function Home() {
     Dinamarca: "dk",
     Ecuador: "ec",
     Egipto: "eg",
-    Inglaterra: "gb", // ⚠️ fallback
+    Inglaterra: "gb",
     España: "es",
     Francia: "fr",
     Alemania: "de",
@@ -65,7 +67,7 @@ export default function Home() {
     Perú: "pe",
     Portugal: "pt",
     Sudáfrica: "za",
-    Escocia: "gb", // ⚠️ fallback
+    Escocia: "gb",
     Senegal: "sn",
     Suiza: "ch",
     Túnez: "tn",
@@ -81,9 +83,7 @@ export default function Home() {
     "República Democrática del Congo": "cd",
   };
 
-  
-
-  const countries = [...new Set(stickers.map((s) => s.seleccion))];
+  const countries = selecciones;
 
   const repetidasAgrupadas = stickers
     .filter((s) => s.repetidas > 0)
@@ -100,7 +100,7 @@ export default function Home() {
     if (!repetidas.length) return alert("No tienes repetidas");
 
     const texto = repetidas
-      .map((s) => `${s.numero} - ${s.jugador} (${s.repetidas}x)`)
+      .map((s) => `${s.numero} (${s.repetidas}x)`)
       .join("\n");
 
     navigator.clipboard.writeText(texto);
@@ -147,7 +147,6 @@ export default function Home() {
 
         setImportedData(normalized);
         setShowImportModal(true);
-
       } catch (err) {
         console.error(err);
         alert("❌ Error: " + err.message);
@@ -189,6 +188,25 @@ export default function Home() {
     alert("🔀 Datos combinados");
   };
 
+  const exportFaltantes = () => {
+    const faltantes = stickers.filter((s) => !s.pegada);
+
+    if (!faltantes.length) return alert("No te faltan figuritas 🎉");
+
+    const agrupado = faltantes.reduce((acc, s) => {
+      if (!acc[s.seleccion]) acc[s.seleccion] = [];
+      acc[s.seleccion].push(s.numero);
+      return acc;
+    }, {});
+
+    const texto = Object.entries(agrupado)
+      .map(([pais, nums]) => `${pais}: ${nums.join(", ")}`)
+      .join("\n");
+
+    navigator.clipboard.writeText(texto);
+    alert("Faltantes agrupados copiados");
+  };
+
   // WELCOME
   if (showWelcome) {
     return (
@@ -219,11 +237,7 @@ export default function Home() {
           s.numero.toString().includes(search);
 
         const matchFilter =
-          filter === "all"
-            ? true
-            : filter === "pegadas"
-            ? s.pegada
-            : !s.pegada;
+          filter === "all" ? true : filter === "pegadas" ? s.pegada : !s.pegada;
 
         return matchSearch && matchFilter;
       });
@@ -269,16 +283,34 @@ export default function Home() {
 
   // PRINCIPAL
   return (
-    <div className="min-h-screen bg-black p-6">
-      <Stats stickers={stickers} onShowRepetidas={() => setShowRepetidas(true)} />
+    <div className="min-h-screen  bg-black p-6">
+      <Stats
+        stickers={stickers}
+        onShowRepetidas={() => setShowRepetidas(true)}
+      />
 
-      <div className="flex gap-3 mt-6 flex-wrap">
-        <button onClick={exportRepetidas} className="bg-[#008f72] px-4 py-2 rounded text-white">
-          Exportar repetidas
+      <div className="flex gap-3 mt-6 flex-wrap justify-center">
+        <button
+          onClick={exportFaltantes}
+          className="bg-yellow-600 px-4 py-2 rounded text-white"
+        >
+          Faltantes 
+          <Download />
+        </button>
+        <button
+          onClick={exportRepetidas}
+          className="bg-[#008f72] px-4 py-2 rounded text-white"
+        >
+           Repetidas
+          <Download />
         </button>
 
-        <button onClick={exportData} className="bg-blue-600 px-4 py-2 rounded text-white">
-          Exportar backup
+        <button
+          onClick={exportData}
+          className="bg-blue-600 px-4 py-2 rounded text-white"
+        >
+          Backup
+          <Download />
         </button>
 
         <label className="bg-purple-600 px-4 py-2 rounded text-white cursor-pointer">
@@ -288,19 +320,37 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-        {countries.map((country) => (
-          <button
-            key={country}
-            onClick={() => setSelectedCountry(country)}
-            className="bg-zinc-900 p-4 rounded-2xl text-white"
-          >
-            <img
-              src={`https://flagcdn.com/w80/${flags[country] || "un"}.png`}
-              className="w-12 mx-auto"
-            />
-            <p className="text-sm mt-2">{country}</p>
-          </button>
-        ))}
+        {countries.map((country) => {
+          const countryStickers = stickers.filter(
+            (s) => s.seleccion === country.nombre
+          );
+
+          const pegadas = countryStickers.filter((s) => s.pegada).length;
+          const total = countryStickers.length;
+
+          return (
+            <button
+              key={country.codigo}
+              onClick={() => setSelectedCountry(country.nombre)}
+              className="bg-zinc-900 p-4 rounded-2xl text-white"
+            >
+              <img
+                src={`https://flagcdn.com/w80/${flags[country.nombre]}.png`}
+                className="w-12 mx-auto"
+              />
+
+              <p className="text-sm mt-2 text-center">{country.nombre}</p>
+
+              <p className="text-xs text-zinc-400 text-center">
+                {country.codigo}
+              </p>
+
+              <p className="text-xs text-zinc-500 text-center">
+                {pegadas}/{total || 20}
+              </p>
+            </button>
+          );
+        })}
       </div>
 
       {/* 🔥 MODAL IMPORT */}
@@ -310,15 +360,24 @@ export default function Home() {
             <h2 className="text-xl text-white mb-4">Importar datos</h2>
 
             <div className="flex flex-col gap-3">
-              <button onClick={handleReplace} className="bg-red-600 py-3 rounded text-white">
+              <button
+                onClick={handleReplace}
+                className="bg-red-600 py-3 rounded text-white"
+              >
                 Reemplazar
               </button>
 
-              <button onClick={handleMerge} className="bg-[#008f72] py-3 rounded text-white">
+              <button
+                onClick={handleMerge}
+                className="bg-[#008f72] py-3 rounded text-white"
+              >
                 Combinar
               </button>
 
-              <button onClick={() => setShowImportModal(false)} className="bg-zinc-800 py-3 rounded text-white">
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="bg-zinc-800 py-3 rounded text-white"
+              >
                 Cancelar
               </button>
             </div>
