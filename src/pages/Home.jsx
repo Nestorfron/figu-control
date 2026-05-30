@@ -40,7 +40,7 @@ export default function Home() {
     Dinamarca: "dk",
     Ecuador: "ec",
     Egipto: "eg",
-    Inglaterra: "gb",
+    Inglaterra: "gb", // ⚠️ fallback
     España: "es",
     Francia: "fr",
     Alemania: "de",
@@ -65,13 +65,23 @@ export default function Home() {
     Perú: "pe",
     Portugal: "pt",
     Sudáfrica: "za",
-    Escocia: "gb",
+    Escocia: "gb", // ⚠️ fallback
     Senegal: "sn",
     Suiza: "ch",
     Túnez: "tn",
     Uruguay: "uy",
     "Estados Unidos": "us",
+    Catar: "qa",
+    Haití: "ht",
+    Turquía: "tr",
+    Suecia: "se",
+    Uzbekistán: "uz",
+    Argelia: "dz",
+    "Cabo Verde": "cv",
+    "República Democrática del Congo": "cd",
   };
+
+  
 
   const countries = [...new Set(stickers.map((s) => s.seleccion))];
 

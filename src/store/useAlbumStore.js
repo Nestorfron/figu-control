@@ -1,24 +1,43 @@
 import { create } from "zustand";
 import { stickers as initialStickers } from "../data/stickers";
 
-const STORAGE_KEY = "album-storage";
-
-const saved = localStorage.getItem(STORAGE_KEY);
+const saved = localStorage.getItem("album-storage");
 
 export const useAlbumStore = create((set) => ({
-  stickers: saved
-    ? JSON.parse(saved)
-    : initialStickers.map((s) => ({
-        ...s,
-        pegada: false,
-        repetidas: 0,
-      })),
+  stickers: (() => {
+    const base = initialStickers.map((s) => ({
+      ...s,
+      pegada: false,
+      repetidas: 0,
+    }));
 
-  // 🔥 NUEVO → necesario para import
-  setStickers: (newStickers) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newStickers));
-    set({ stickers: newStickers });
-  },
+    if (!saved) {
+      localStorage.setItem("album-storage", JSON.stringify(base));
+      return base;
+    }
+
+    const parsed = JSON.parse(saved);
+
+    // 🔥 MERGE INTELIGENTE
+    const merged = base.map((newSticker) => {
+      const existing = parsed.find((s) => s.id === newSticker.id);
+
+      if (existing) {
+        return {
+          ...newSticker,
+          pegada: existing.pegada ?? false,
+          repetidas: existing.repetidas ?? 0,
+        };
+      }
+
+      return newSticker;
+    });
+
+    // 🔥 guardar actualizado
+    localStorage.setItem("album-storage", JSON.stringify(merged));
+
+    return merged;
+  })(),
 
   togglePegada: (id) =>
     set((state) => {
@@ -26,8 +45,7 @@ export const useAlbumStore = create((set) => ({
         s.id === id ? { ...s, pegada: !s.pegada } : s
       );
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-
+      localStorage.setItem("album-storage", JSON.stringify(updated));
       return { stickers: updated };
     }),
 
@@ -39,8 +57,7 @@ export const useAlbumStore = create((set) => ({
           : s
       );
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-
+      localStorage.setItem("album-storage", JSON.stringify(updated));
       return { stickers: updated };
     }),
 
@@ -55,8 +72,13 @@ export const useAlbumStore = create((set) => ({
           : s
       );
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-
+      localStorage.setItem("album-storage", JSON.stringify(updated));
       return { stickers: updated };
     }),
+
+  // 🔥 OPCIONAL (pro)
+  resetAlbum: () => {
+    localStorage.removeItem("album-storage");
+    location.reload();
+  },
 }));
