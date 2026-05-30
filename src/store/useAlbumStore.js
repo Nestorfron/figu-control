@@ -3,6 +3,8 @@ import { stickers as initialStickers } from "../data/stickers";
 
 const saved = localStorage.getItem("album-storage");
 
+const STORAGE_KEY = "album-storage";
+
 export const useAlbumStore = create((set) => ({
   stickers: (() => {
     const base = initialStickers.map((s) => ({
@@ -38,6 +40,13 @@ export const useAlbumStore = create((set) => ({
 
     return merged;
   })(),
+
+  // 🔥 NUEVO → necesario para import
+  setStickers: (newStickers) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newStickers));
+    set({ stickers: newStickers });
+  },
+  
 
   togglePegada: (id) =>
     set((state) => {
