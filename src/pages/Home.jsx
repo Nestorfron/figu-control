@@ -136,13 +136,6 @@ export default function Home() {
 
   const countries = selecciones;
 
-  const repetidasAgrupadas = stickers
-    .filter((s) => s.repetidas > 0)
-    .reduce((acc, sticker) => {
-      if (!acc[sticker.seleccion]) acc[sticker.seleccion] = [];
-      acc[sticker.seleccion].push(sticker);
-      return acc;
-    }, {});
 
   // EXPORTAR FALTANTES
 
@@ -174,13 +167,30 @@ export default function Home() {
   // EXPORTAR REPETIDAS
   const exportRepetidas = () => {
     const repetidas = stickers.filter((s) => s.repetidas > 0);
-
-    if (!repetidas.length) return alert("No tienes repetidas");
-
-    const texto = repetidas
-      .map((s) => `${s.numero} (${s.repetidas}x)`)
+  
+    if (!repetidas.length) {
+      return alert("No tienes repetidas");
+    }
+  
+    const agrupado = repetidas.reduce((acc, s) => {
+      const codigo = s.numero.split("-")[0];
+  
+      if (!acc[codigo]) acc[codigo] = [];
+  
+      acc[codigo].push(
+        `${s.numero.split("-")[1]} (${s.repetidas}x)`
+      );
+  
+      return acc;
+    }, {});
+  
+    const texto = Object.entries(agrupado)
+      .map(([codigo, nums]) => {
+        const emoji = flagEmojiByCode[codigo] || "🏳️";
+        return `${codigo} ${emoji}: ${nums.join(", ")}`;
+      })
       .join("\n");
-
+  
     navigator.clipboard.writeText(texto);
     alert("Lista copiada");
   };
