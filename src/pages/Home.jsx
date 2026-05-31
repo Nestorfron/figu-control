@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAlbumStore } from "../store/useAlbumStore";
-import { ArrowLeft, Download, Upload } from "lucide-react";
+import { ArrowLeft, Download, ArchiveRestore, Share2, Copy, SquareDashed, CircleDashed } from "lucide-react";
 
 import Stats from "../components/Stats";
 import StickerCard from "../components/StickerCard";
@@ -148,66 +148,70 @@ export default function Home() {
   // EXPORTAR BACKUP
 
   const exportBackupCode = async () => {
-    const backup = stickers
-      .filter((s) => s.pegada || s.repetidas > 0)
-      .map((s) => [s.id, Number(s.pegada), s.repetidas]);
+    const backup = {
+      v: 1,
 
-    const compressed = compressToEncodedURIComponent(JSON.stringify(backup));
+      p: stickers.filter((s) => s.pegada).map((s) => s.id),
 
-    const code = `FC26:${compressed}`;
+      r: stickers
+        .filter((s) => s.repetidas > 0)
+        .map((s) => [s.id, s.repetidas]),
+    };
+
+    const code =
+      "FC26:" + compressToEncodedURIComponent(JSON.stringify(backup));
+
+    console.log("Longitud:", code.length);
 
     await navigator.clipboard.writeText(code);
 
-    alert("Código copiado al portapapeles");
+    alert("Código copiado");
   };
 
   // IMPORTAR BACKUP
 
   const importBackupCode = () => {
     try {
-      if (!backupCode.startsWith("FC26:")) {
+      const code = backupCode.trim();
+
+      if (!code) {
+        alert("Pega un código primero");
+        return;
+      }
+
+      if (!code.startsWith("FC26:")) {
         throw new Error("Código inválido");
       }
 
-      const compressed = backupCode.replace("FC26:", "");
+      const compressed = code.replace("FC26:", "");
 
-      const backup = JSON.parse(decompressFromEncodedURIComponent(compressed));
+      const json = decompressFromEncodedURIComponent(compressed);
 
-      const backupMap = new Map(
-        backup.map((item) => [
-          item[0],
-          {
-            pegada: Boolean(item[1]),
-            repetidas: item[2],
-          },
-        ])
-      );
+      if (!json) {
+        throw new Error("No se pudo descomprimir el respaldo");
+      }
 
-      const restored = stickers.map((sticker) => {
-        const saved = backupMap.get(sticker.id);
+      const backup = JSON.parse(json);
 
-        if (!saved) {
-          return {
-            ...sticker,
-            pegada: false,
-            repetidas: 0,
-          };
-        }
+      const pegadas = new Set(backup.p || []);
 
-        return {
-          ...sticker,
-          pegada: saved.pegada,
-          repetidas: saved.repetidas,
-        };
-      });
+      const repetidas = new Map(backup.r || []);
+
+      const restored = stickers.map((s) => ({
+        ...s,
+        pegada: pegadas.has(s.id),
+        repetidas: repetidas.get(s.id) || 0,
+      }));
 
       setStickers(restored);
 
+      setBackupCode("");
       setShowImportCode(false);
 
-      alert("Álbum restaurado");
-    } catch (error) {
-      alert("Error al importar respaldo");
+      alert("✅ Álbum restaurado");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error al importar el código");
     }
   };
 
@@ -432,39 +436,41 @@ export default function Home() {
 
       <div className="flex gap-3 mt-6 flex-wrap justify-center">
         <button
+          title="Faltantes"
           onClick={exportFaltantes}
           className="bg-yellow-600 px-4 py-2 rounded text-white"
         >
-          Faltantes
-          <Download />
+          <SquareDashed />
         </button>
         <button
+          title="Repetidas"
           onClick={exportRepetidas}
           className="bg-[#008f72] px-4 py-2 rounded text-white"
         >
-          Repetidas
-          <Download />
-        </button>
-        
-        <button
-          onClick={exportBackupCode}
-          className="bg-green-600 px-4 py-2 rounded text-white"
-        >
-          Exportar
+          <Copy />
         </button>
 
         <button
-          onClick={() => setShowImportCode(true)}
-          className="bg-blue-600 px-4 py-2 rounded text-white"
+          title="Compartir"
+          onClick={exportBackupCode}
+          className="bg-green-600 px-4 py-2 rounded text-white flex items-center gap-2"
         >
-          Importar
+          <Share2 size={18} />
+        </button>
+
+        <button
+          title="Restaurar"
+          onClick={() => setShowImportCode(true)}
+          className="bg-blue-600 px-4 py-2 rounded text-white flex items-center gap-2"
+        >
+          <ArchiveRestore size={18} />
         </button>
       </div>
 
       {showImportCode && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center">
           <div className="bg-zinc-900 p-6 rounded-3xl max-w-md w-full">
-            <h2 className="text-white text-xl mb-4">Restaurar/Actualizar</h2>
+            <h2 className="text-white text-xl mb-4">Restaurar álbum</h2>
 
             <textarea
               value={backupCode}
