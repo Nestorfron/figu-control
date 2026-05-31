@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { useAlbumStore } from "../store/useAlbumStore";
-import { ArrowLeft, Download, ArchiveRestore, Share2, Copy, SquareDashed, CircleDashed } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  ArchiveRestore,
+  Share2,
+  Copy,
+  SquareDashed,
+  CircleDashed,
+} from "lucide-react";
 
 import Stats from "../components/Stats";
 import StickerCard from "../components/StickerCard";
@@ -172,7 +180,7 @@ export default function Home() {
 
   const importBackupCode = () => {
     try {
-      const code = backupCode.trim();
+      const code = backupCode.replace(/\s+/g, "").trim();
 
       if (!code) {
         alert("Pega un código primero");
