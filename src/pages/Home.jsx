@@ -171,9 +171,7 @@ export default function Home() {
 
     console.log("Longitud:", code.length);
 
-    const texto = encodeURIComponent(code);
-
-    window.open(`https://wa.me/?text=${texto}`, "_blank");
+    window.location.href =  `https://wa.me/?text=${encodeURIComponent(code)}`;
   };
 
   // IMPORTAR BACKUP
