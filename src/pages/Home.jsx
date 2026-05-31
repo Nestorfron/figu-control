@@ -171,9 +171,9 @@ export default function Home() {
 
     console.log("Longitud:", code.length);
 
-    await navigator.clipboard.writeText(code);
+    const texto = encodeURIComponent(code);
 
-    alert("Código copiado");
+    window.open(`https://wa.me/?text=${texto}`, "_blank");
   };
 
   // IMPORTAR BACKUP
@@ -187,7 +187,7 @@ export default function Home() {
         return;
       }
 
-      if (!code.startsWith("FC26:")) {
+      if (!code.startsWith("FC26:" || !code.startsWith("fc26:"))) {
         throw new Error("Código inválido");
       }
 
