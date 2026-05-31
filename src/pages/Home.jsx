@@ -181,41 +181,42 @@ export default function Home() {
   const importBackupCode = () => {
     try {
       const code = backupCode.replace(/\s+/g, "").trim();
-
+  
       if (!code) {
         alert("Pega un código primero");
         return;
       }
-
-      if (!code.startsWith("FC26:" || !code.startsWith("fc26:"))) {
+  
+      const upperCode = code.toUpperCase();
+  
+      if (!upperCode.startsWith("FC26:")) {
         throw new Error("Código inválido");
       }
-
-      const compressed = code.replace("FC26:", "");
-
+  
+      const compressed = code.substring(5); // elimina FC26: o fc26:
+  
       const json = decompressFromEncodedURIComponent(compressed);
-
+  
       if (!json) {
         throw new Error("No se pudo descomprimir el respaldo");
       }
-
+  
       const backup = JSON.parse(json);
-
+  
       const pegadas = new Set(backup.p || []);
-
       const repetidas = new Map(backup.r || []);
-
+  
       const restored = stickers.map((s) => ({
         ...s,
         pegada: pegadas.has(s.id),
         repetidas: repetidas.get(s.id) || 0,
       }));
-
+  
       setStickers(restored);
-
+  
       setBackupCode("");
       setShowImportCode(false);
-
+  
       alert("✅ Álbum restaurado");
     } catch (err) {
       console.error(err);
