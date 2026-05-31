@@ -7,6 +7,11 @@ import StickerCard from "../components/StickerCard";
 
 import { selecciones } from "../data/stickers";
 
+import {
+  compressToEncodedURIComponent,
+  decompressFromEncodedURIComponent,
+} from "lz-string";
+
 export default function Home() {
   const { stickers, setStickers } = useAlbumStore();
 
@@ -19,6 +24,10 @@ export default function Home() {
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+
+  const [showImportCode, setShowImportCode] = useState(false);
+
+  const [backupCode, setBackupCode] = useState("");
 
   // 🔥 NUEVO (modal import)
   const [showImportModal, setShowImportModal] = useState(false);
@@ -136,6 +145,71 @@ export default function Home() {
 
   const countries = selecciones;
 
+  // EXPORTAR BACKUP
+
+  const exportBackupCode = async () => {
+    const backup = stickers
+      .filter((s) => s.pegada || s.repetidas > 0)
+      .map((s) => [s.id, Number(s.pegada), s.repetidas]);
+
+    const compressed = compressToEncodedURIComponent(JSON.stringify(backup));
+
+    const code = `FC26:${compressed}`;
+
+    await navigator.clipboard.writeText(code);
+
+    alert("Código copiado al portapapeles");
+  };
+
+  // IMPORTAR BACKUP
+
+  const importBackupCode = () => {
+    try {
+      if (!backupCode.startsWith("FC26:")) {
+        throw new Error("Código inválido");
+      }
+
+      const compressed = backupCode.replace("FC26:", "");
+
+      const backup = JSON.parse(decompressFromEncodedURIComponent(compressed));
+
+      const backupMap = new Map(
+        backup.map((item) => [
+          item[0],
+          {
+            pegada: Boolean(item[1]),
+            repetidas: item[2],
+          },
+        ])
+      );
+
+      const restored = stickers.map((sticker) => {
+        const saved = backupMap.get(sticker.id);
+
+        if (!saved) {
+          return {
+            ...sticker,
+            pegada: false,
+            repetidas: 0,
+          };
+        }
+
+        return {
+          ...sticker,
+          pegada: saved.pegada,
+          repetidas: saved.repetidas,
+        };
+      });
+
+      setStickers(restored);
+
+      setShowImportCode(false);
+
+      alert("Álbum restaurado");
+    } catch (error) {
+      alert("Error al importar respaldo");
+    }
+  };
 
   // EXPORTAR FALTANTES
 
@@ -167,30 +241,28 @@ export default function Home() {
   // EXPORTAR REPETIDAS
   const exportRepetidas = () => {
     const repetidas = stickers.filter((s) => s.repetidas > 0);
-  
+
     if (!repetidas.length) {
       return alert("No tienes repetidas");
     }
-  
+
     const agrupado = repetidas.reduce((acc, s) => {
       const codigo = s.numero.split("-")[0];
-  
+
       if (!acc[codigo]) acc[codigo] = [];
-  
-      acc[codigo].push(
-        `${s.numero.split("-")[1]}`
-      );
-  
+
+      acc[codigo].push(`${s.numero.split("-")[1]}`);
+
       return acc;
     }, {});
-  
+
     const texto = Object.entries(agrupado)
       .map(([codigo, nums]) => {
         const emoji = flagEmojiByCode[codigo] || "🏳️";
         return `${codigo} ${emoji}: ${nums.join(", ")}`;
       })
       .join("\n");
-  
+
     navigator.clipboard.writeText(texto);
     alert("Lista copiada");
   };
@@ -373,21 +445,49 @@ export default function Home() {
           Repetidas
           <Download />
         </button>
-
+        
         <button
-          onClick={exportData}
-          className="bg-blue-600 px-4 py-2 rounded text-white"
+          onClick={exportBackupCode}
+          className="bg-green-600 px-4 py-2 rounded text-white"
         >
-          Backup
-          <Download />
+          Exportar
         </button>
 
-        <label className="bg-purple-600 px-4 py-2 rounded text-white cursor-pointer">
+        <button
+          onClick={() => setShowImportCode(true)}
+          className="bg-blue-600 px-4 py-2 rounded text-white"
+        >
           Importar
-          <input type="file" hidden onChange={importData} />
-          <Upload />
-        </label>
+        </button>
       </div>
+
+      {showImportCode && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center">
+          <div className="bg-zinc-900 p-6 rounded-3xl max-w-md w-full">
+            <h2 className="text-white text-xl mb-4">Restaurar/Actualizar</h2>
+
+            <textarea
+              value={backupCode}
+              onChange={(e) => setBackupCode(e.target.value)}
+              className="w-full h-40 bg-zinc-800 text-white p-3 rounded"
+              placeholder="Pega aquí el código"
+            />
+
+            <button
+              onClick={importBackupCode}
+              className="w-full mt-4 bg-[#008f72] py-3 rounded text-white"
+            >
+              Restaurar
+            </button>
+            <button
+              onClick={() => setShowImportCode(false)}
+              className="w-full mt-2 bg-zinc-800 py-3 rounded text-white"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
         {countries.map((country) => {
